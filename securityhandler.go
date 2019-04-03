@@ -350,3 +350,15 @@ func HupdateUserDetails(httpwriter http.ResponseWriter, req *http.Request) {
 	return
 
 }
+
+// Hfinduser is
+func Hfinduser(httpwriter http.ResponseWriter, httprequest *http.Request) {
+
+	found := security.Credentials{}
+
+	tofind := httprequest.FormValue("userid") // This is the key, must be unique
+
+	found, _ = security.Find(tofind)
+
+	json.NewEncoder(httpwriter).Encode(&found)
+}

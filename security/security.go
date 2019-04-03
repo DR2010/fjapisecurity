@@ -28,13 +28,14 @@ type Credentials struct {
 	ApplicationID    string        //
 	CentroID         string        //
 	MobilePhone      string        //
+	Expiry           string        //
 	JWT              string        //
+	KeyJWT           string        //
 	ClaimSet         []Claim       //
 	Status           string        // It is set to Active manually by Daniel 'Active' or Inactive.
 	IsAdmin          string        //
 	IsAnonymous      string        //
 	ResetCode        string        //
-
 }
 
 // Claim is

@@ -64,4 +64,5 @@ var routes = Routes{
 	Route{"getuserdetails", "POST", "/getuserdetails", HgetUserDetails},
 	Route{"updateuserdetails", "POST", "/updateuserdetails", HupdateUserDetails},
 	Route{"userlist", "GET", "/userlist", HlistAllUsers},
+	Route{"find", "GET", "/find", Hfinduser},
 }

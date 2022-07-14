@@ -39,14 +39,14 @@ func main() {
 
 	loadreferencedatainredis()
 
-	ThisAPIPort := helper.Getvaluefromcache("ThisAPIPort")
+	SecurityMicroservicePort := helper.Getvaluefromcache("SecurityMicroservicePort")
 	MongoDBLocation := helper.Getvaluefromcache("API.MongoDB.Location")
 	MongoDBDatabase := helper.Getvaluefromcache("API.MongoDB.Database")
 
 	mongodbvar.Location = MongoDBLocation
 	mongodbvar.Database = MongoDBDatabase
 
-	fmt.Println("Running... Listening to " + ThisAPIPort)
+	fmt.Println("Running... Listening to " + SecurityMicroservicePort)
 	fmt.Println("MongoDB location: " + MongoDBLocation)
 	fmt.Println("MongoDB database: " + MongoDBDatabase)
 
@@ -56,7 +56,7 @@ func main() {
 	//
 	http.Handle("/", router) // setting router rule
 
-	err := http.ListenAndServe(":"+ThisAPIPort, nil) // setting listening port
+	err := http.ListenAndServe(":"+SecurityMicroservicePort, nil) // setting listening port
 	if err != nil {
 		//using the mux router
 		log.Fatal("ListenAndServe: ", err)
@@ -73,8 +73,8 @@ func loadreferencedatainredis() {
 
 	fmt.Println("loadreferencedatainredis - sysid: " + sysid)
 
-	err = redisclient.Set(sysid+"ThisAPIPort", variable.ThisAPIPort, 0).Err()
-	err = redisclient.Set(sysid+"ThisAPIURL", variable.ThisAPIURL, 0).Err()
+	err = redisclient.Set(sysid+"SecurityMicroservicePort", variable.SecurityMicroservicePort, 0).Err()
+	err = redisclient.Set(sysid+"SecurityMicroserviceURL", variable.SecurityMicroserviceURL, 0).Err()
 	err = redisclient.Set(sysid+"API.MongoDB.Location", variable.APIMongoDBLocation, 0).Err()
 	err = redisclient.Set(sysid+"API.MongoDB.Database", variable.APIMongoDBDatabase, 0).Err()
 	err = redisclient.Set(sysid+"Web.Debug", variable.WEBDebug, 0).Err()

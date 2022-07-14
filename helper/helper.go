@@ -12,6 +12,14 @@ var redisclient *redis.Client
 var SYSID string
 var databaseEV DatabaseX
 
+// UserInfo is a struct
+type UserInfo struct {
+	Userid   string // Userid
+	Password string // Password nae
+	Database string // database name
+	SYSID    string // SYSID name
+}
+
 // DatabaseX is a struct
 type DatabaseX struct {
 	Location   string // location of the database localhost, something.com, etc
@@ -46,18 +54,22 @@ func GetRedisPointer(bucket int) *redis.Client {
 // RestEnvVariables = restaurante environment variables
 //
 type RestEnvVariables struct {
-	APIMongoDBLocation    string // location of the database localhost, something.com, etc
-	APIMongoDBDatabase    string // database name
-	APIAPIServerPort      string // collection name
-	APIAPIServerIPAddress string // apiserver name
-	ThisAPIPort           string // apiserver name
-	ThisAPIURL            string // apiserver name
-	WEBDebug              string // debug
-	CollectionOrders      string // Collection Names
-	CollectionSecurity    string // Collection Names
-	CollectionDishes      string // Collection Names
-	CollectionEvents      string // Collection Names
-	SYSID                 string // Collection Names
+	APIMongoDBLocation       string // location of the database localhost, something.com, etc
+	APIMongoDBDatabase       string // database name
+	APIAPIServerPort         string // collection name
+	APIAPIServerIPAddress    string // apiserver name
+	SecurityMicroservicePort string // Microservices IP Address
+	SecurityMicroserviceURL  string // Microservices IP Address
+	ThisAPIPort              string // apiserver name
+	ThisAPIURL               string // apiserver name
+	WEBDebug                 string // debug
+	CollectionOrders         string // Collection Names
+	CollectionSecurity       string // Collection Names
+	CollectionDishes         string // Collection Names
+	CollectionEvents         string // Collection Names
+	SYSID                    string // Collection Names
+	FESTAJUNINA              string // Database name based on SYSID
+	REALESTATE               string // Database name based on SYSID
 }
 
 // Readfileintostruct is

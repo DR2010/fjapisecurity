@@ -20,14 +20,17 @@ import (
 // Hsecuritylogin is
 func Hsecuritylogin(httpwriter http.ResponseWriter, req *http.Request) {
 
-	var userid = req.FormValue("userid")
-	var password = req.FormValue("password")
+	var userinfo helper.UserInfo
+
+	userinfo.Userid = req.FormValue("userid")
+	userinfo.Password = req.FormValue("password")
+	userinfo.Database = req.FormValue("database")
 
 	// params := req.URL.Query()
 	// cotacaotoadd.Currency = params.Get("Currency")
 	// cotacaotoadd.Balance = params.Get("Balance")
 
-	token, _ := security.ValidateUserCredentials(userid, password)
+	token, _ := security.ValidateUserCredentials(userinfo)
 
 	if token == "Error" {
 		httpwriter.WriteHeader(http.StatusInternalServerError)
@@ -39,7 +42,7 @@ func Hsecuritylogin(httpwriter http.ResponseWriter, req *http.Request) {
 	// Store user roles also
 	//
 	var usercredentials security.Credentials
-	usercredentials.UserID = userid
+	usercredentials.UserID = userinfo.Userid
 	// usercredentials.Roles = []string
 
 	json.NewEncoder(httpwriter).Encode(&token)
@@ -49,14 +52,16 @@ func Hsecuritylogin(httpwriter http.ResponseWriter, req *http.Request) {
 // HsecurityloginV2 is
 func HsecurityloginV2(httpwriter http.ResponseWriter, req *http.Request) {
 
-	var userid = req.FormValue("userid")
-	var password = req.FormValue("password")
+	var userinfo helper.UserInfo
+
+	userinfo.Userid = req.FormValue("userid")
+	userinfo.Password = req.FormValue("password")
 
 	// params := req.URL.Query()
 	// cotacaotoadd.Currency = params.Get("Currency")
 	// cotacaotoadd.Balance = params.Get("Balance")
 
-	credentialwithtoken, _ := security.ValidateUserCredentialsV2(userid, password)
+	credentialwithtoken, _ := security.ValidateUserCredentialsV2(userinfo)
 
 	if credentialwithtoken.JWT == "Error" {
 		httpwriter.WriteHeader(http.StatusInternalServerError)
@@ -88,8 +93,11 @@ func Hsecuritysignup(httpwriter http.ResponseWriter, req *http.Request) {
 	userInsert.ClaimSet[2].Type = "APPLICATIONID"
 	userInsert.ClaimSet[2].Value = req.FormValue("applicationid")
 
+	var userinfo helper.UserInfo
+	userinfo.Userid = userInsert.UserID
+
 	token := ""
-	_, resfind := security.Find(userInsert.UserID)
+	_, resfind := security.Find(userinfo)
 	if resfind == "200 OK" {
 		token = "User already exists"
 
@@ -188,8 +196,10 @@ func HchangePassword(httpwriter http.ResponseWriter, req *http.Request) {
 	}
 
 	// Update Password
+	var userinfo helper.UserInfo
+	userinfo.Userid = credentials.UserID
 
-	usercredentials, resfind := security.Find(credentials.UserID)
+	usercredentials, resfind := security.Find(userinfo)
 	if resfind == "200 OK" {
 		// User exists
 		// Update password
@@ -233,7 +243,10 @@ func HgetUserDetails(httpwriter http.ResponseWriter, req *http.Request) {
 	credentials := security.Credentials{}
 	credentials.UserID = strings.ToUpper(objtoaction.Email)
 
-	usercredentials, resfind := security.Find(credentials.UserID)
+	var userinfo helper.UserInfo
+	userinfo.Userid = credentials.UserID
+
+	usercredentials, resfind := security.Find(userinfo)
 	if resfind == "200 OK" {
 		// All good
 	} else {
@@ -323,7 +336,10 @@ func HupdateUserDetails(httpwriter http.ResponseWriter, req *http.Request) {
 
 	// Update Password
 
-	usercredentials, resfind := security.Find(credentials.UserID)
+	var userinfo helper.UserInfo
+	userinfo.Userid = credentials.UserID
+
+	usercredentials, resfind := security.Find(userinfo)
 	if resfind == "200 OK" {
 		// User exists
 		// Update password
@@ -358,7 +374,10 @@ func Hfinduser(httpwriter http.ResponseWriter, httprequest *http.Request) {
 
 	tofind := httprequest.FormValue("userid") // This is the key, must be unique
 
-	found, _ = security.Find(tofind)
+	var userinfo helper.UserInfo
+	userinfo.Userid = tofind
+
+	found, _ = security.Find(userinfo)
 
 	json.NewEncoder(httpwriter).Encode(&found)
 }

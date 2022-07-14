@@ -82,11 +82,11 @@ func Useradd(sysid string, redisclient *redis.Client, userInsert Credentials) he
 }
 
 // Find is to find stuff
-func Find(userid string) (Credentials, string) {
+func Find(userinfo helper.UserInfo) (Credentials, string) {
 
 	database := helper.GetDBParmFromCache("CollectionSecurity")
 
-	log.Println("Looking for " + userid)
+	log.Println("Looking for " + userinfo.Userid)
 	log.Println("...on DB: " + database.Database)
 
 	dishnull := Credentials{}
@@ -103,7 +103,7 @@ func Find(userid string) (Credentials, string) {
 	c := session.DB(database.Database).C(database.Collection)
 
 	result := []Credentials{}
-	err1 := c.Find(bson.M{"userid": userid}).All(&result)
+	err1 := c.Find(bson.M{"userid": userinfo.Userid}).All(&result)
 	if err1 != nil {
 		// log.Fatal(err1)
 		log.Println(err1)
@@ -112,7 +112,7 @@ func Find(userid string) (Credentials, string) {
 	var numrecsel = len(result)
 
 	if numrecsel <= 0 {
-		log.Println("404 Not found -> " + userid)
+		log.Println("404 Not found -> " + userinfo.Userid)
 		return dishnull, "404 Not found"
 	}
 
@@ -184,34 +184,34 @@ func Userupdate(userUpdate Credentials) helper.Resultado {
 }
 
 // ValidateUserCredentials is to find stuff
-func ValidateUserCredentials(userid string, password string) (string, string) {
+func ValidateUserCredentials(userinfo helper.UserInfo) (string, string) {
 
 	// look for user
-	var us, _ = Find(userid)
+	var us, _ = Find(userinfo)
 
-	var passwordhashed = Hashstring(password)
+	var passwordhashed = Hashstring(userinfo.Password)
 
 	if passwordhashed != us.Password {
 		return "Error", "404 Error"
 	}
 
-	var jwt = getjwtfortoday(userid)
+	var jwt = getjwtfortoday(userinfo.Userid)
 	return jwt, "200 OK"
 }
 
 // ValidateUserCredentialsV2 is to find stuff
-func ValidateUserCredentialsV2(userid string, password string) (Credentials, string) {
+func ValidateUserCredentialsV2(userinfo helper.UserInfo) (Credentials, string) {
 
 	var usercredentials Credentials
-	usercredentials.UserID = userid
+	usercredentials.UserID = userinfo.Userid
 	usercredentials.ApplicationID = "None"
 	usercredentials.JWT = "Error"
 	usercredentials.Status = "Error"
 
 	// look for user
-	var userdatabase, _ = Find(userid)
+	var userdatabase, _ = Find(userinfo)
 
-	var passwordhashed = Hashstring(password)
+	var passwordhashed = Hashstring(userinfo.Password)
 
 	if passwordhashed != userdatabase.Password {
 		usercredentials.Status = "404 Error invalid password"
@@ -228,7 +228,7 @@ func ValidateUserCredentialsV2(userid string, password string) (Credentials, str
 	}
 
 	// Get the JWT
-	var jwt = getjwtfortoday(userid)
+	var jwt = getjwtfortoday(userinfo.Userid)
 
 	// Assign the JWT to the return JSON object Credentials
 	userdatabase.JWT = jwt

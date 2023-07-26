@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 
 	"github.com/go-redis/redis"
 )
@@ -38,11 +39,11 @@ type Resultado struct {
 // GetRedisPointer returns
 func GetRedisPointer(bucket int) *redis.Client {
 
-	bucket = 0
+	// bucket = 0
 
 	if redisclient == nil {
 		redisclient = redis.NewClient(&redis.Options{
-			Addr:     "localhost:6379",
+			Addr:     "192.168.1.200:6379",
 			Password: "",     // no password set
 			DB:       bucket, // use default DB
 		})
@@ -52,8 +53,9 @@ func GetRedisPointer(bucket int) *redis.Client {
 }
 
 // RestEnvVariables = restaurante environment variables
-//
 type RestEnvVariables struct {
+	MySQLLocation            string
+	MySQLConnString          string
 	APIMongoDBLocation       string // location of the database localhost, something.com, etc
 	APIMongoDBDatabase       string // database name
 	APIAPIServerPort         string // collection name
@@ -70,11 +72,13 @@ type RestEnvVariables struct {
 	SYSID                    string // Collection Names
 	FESTAJUNINA              string // Database name based on SYSID
 	REALESTATE               string // Database name based on SYSID
+	RedisAddressPort         string // Collection Names
+	RedisPassword            string // Collection Names
 }
 
 // Readfileintostruct is
 func Readfileintostruct() RestEnvVariables {
-	dat, err := ioutil.ReadFile("fjapisecurity.ini")
+	dat, err := ioutil.ReadFile("config.ini")
 	check(err)
 	fmt.Print(string(dat))
 
@@ -91,7 +95,7 @@ func GetSYSID() string {
 
 	if SYSID == "" {
 
-		dat, err := ioutil.ReadFile("fjapisecurity.ini")
+		dat, err := ioutil.ReadFile("config.ini")
 		check(err)
 		fmt.Print(string(dat))
 
@@ -130,7 +134,16 @@ func Getvaluefromcache(key string) string {
 
 	sysid := GetSYSID()
 
-	valuetoreturn, _ := rp.Get(sysid + key).Result()
+	valuetoreturn, err := rp.Get(sysid + key).Result()
+
+	if err != nil {
+		//using the mux router
+		fmt.Println("Getvaluefromcache err.Error >> " + err.Error())
+		log.Fatal("Getvaluefromcache: ", err)
+	}
+
+	fmt.Println("sysid + key >> " + sysid + key)
+	fmt.Println("valuetoreturn >> " + valuetoreturn)
 
 	return valuetoreturn
 }

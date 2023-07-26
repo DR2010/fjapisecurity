@@ -8,3 +8,10 @@ O source code esta em:
 
 
 chmod +x ~/deployubu.sh
+
+
+Ports
+
+security younit 1365
+dmapicomplex    1351
+website         1555

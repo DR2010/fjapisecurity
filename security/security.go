@@ -5,12 +5,16 @@
 package security
 
 import (
+	"crypto/rand"
 	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/base32"
 	"encoding/hex"
-	helper "fjapisecurity/helper"
+	"fmt"
 	"log"
 	"strings"
 	"time"
+	helper "younitsecurity/helper"
 
 	"github.com/go-redis/redis"
 
@@ -30,12 +34,26 @@ type Credentials struct {
 	MobilePhone      string        //
 	Expiry           string        //
 	JWT              string        //
-	KeyJWT           string        //
-	ClaimSet         []Claim       //
-	Status           string        // It is set to Active manually by Daniel 'Active' or Inactive.
-	IsAdmin          string        //
-	IsAnonymous      string        //
-	ResetCode        string        //
+	TokenJWT         Token
+	KeyJWT           string  //
+	ClaimSet         []Claim //
+	Status           string  // It is set to Active manually by Daniel 'Active' or Inactive.
+	IsAdmin          string  //
+	IsAnonymous      string  //
+	ResetCode        string  //
+}
+
+// Token is the data structure for any token in the database. Note that
+// we do not send the TokenHash (a slice of bytes) in any exported JSON.
+type Token struct {
+	ID        int       `json:"id"`
+	UserID    string    `json:"user_id"`
+	Email     string    `json:"email"`
+	Token     string    `json:"token"`
+	TokenHash []byte    `json:"-"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Expiry    time.Time `json:"expiry"`
 }
 
 // Claim is
@@ -88,11 +106,20 @@ func Find(userinfo helper.UserInfo) (Credentials, string) {
 
 	log.Println("Looking for " + userinfo.Userid)
 	log.Println("...on DB: " + database.Database)
+	log.Println("database.Location: " + database.Location)
 
 	dishnull := Credentials{}
 
-	session, err := mgo.Dial(database.Location)
+	var hostName = "192.168.1.200" // database.Location
+	var port = "27017"
+	var dbName = "" // database.Database
+
+	uri := fmt.Sprintf("mongodb://%s:%s/%s", hostName, port, dbName)
+
+	session, err := mgo.Dial(uri)
+	// session, err := mgo.Dial(database.Location + ":27017")
 	if err != nil {
+		log.Println("err.Error: " + err.Error())
 		panic(err)
 	}
 	defer session.Close()
@@ -218,20 +245,22 @@ func ValidateUserCredentialsV2(userinfo helper.UserInfo) (Credentials, string) {
 		return usercredentials, "404 Error"
 	}
 
-	if userdatabase.ApplicationID == "Belnorth" {
-		if userdatabase.Status != "Active" {
-			// If I have not make the user active
-			// initially only set to Belnorth
-			usercredentials.Status = "404 Error Belnorth User not active"
-			return usercredentials, "404 Error"
-		}
-	}
-
 	// Get the JWT
-	var jwt = getjwtfortoday(userinfo.Userid)
+	// var jwt = getjwtfortoday(userinfo.Userid)
+	var jwt, err = GenerateToken(userinfo.Userid, 2*time.Hour)
 
 	// Assign the JWT to the return JSON object Credentials
-	userdatabase.JWT = jwt
+
+	if err != nil {
+		usercredentials.UserID = userinfo.Userid
+		usercredentials.ApplicationID = "None"
+		usercredentials.JWT = "Error"
+		usercredentials.Status = "Error"
+		return usercredentials, err.Error()
+	}
+
+	userdatabase.JWT = jwt.Token
+	userdatabase.TokenJWT = jwt
 
 	userdatabase.IsAdmin = "No"
 	// Check if user is admin
@@ -308,4 +337,31 @@ func Hashstring(str string) string {
 	sha1hash := hex.EncodeToString(h.Sum(nil))
 
 	return sha1hash
+}
+
+// GenerateToken generates a secure token of exactly 26 characters in length and returns it
+func GenerateToken(userID string, ttl time.Duration) (Token, error) {
+
+	emptytoken := Token{
+		UserID: "",
+		Expiry: time.Now(),
+	}
+	randomBytes := make([]byte, 245)
+	// randomBytes := make([]byte, 16)
+
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return emptytoken, err
+	}
+
+	token := Token{
+		UserID: userID,
+		Expiry: time.Now().Add(ttl),
+	}
+
+	token.Token = base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(randomBytes)
+	hash := sha256.Sum256([]byte(token.Token))
+	token.TokenHash = hash[:]
+
+	return token, nil
 }
